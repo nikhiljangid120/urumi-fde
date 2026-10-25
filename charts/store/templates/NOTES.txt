@@ -1,0 +1,15 @@
+WordPress and MySQL infrastructure installed.
+Ingress host: {{ .Values.ingress.host }}
+{{- if .Values.setup.url }}
+Store URL: {{ .Values.setup.url }}
+{{- else }}
+On the local k3d cluster, open http://{{ .Values.ingress.host }}:8080
+{{- end }}
+{{- if .Values.setup.enabled }}
+WordPress/WooCommerce setup runs as a post-install/post-upgrade Job.
+{{- else }}
+Automatic setup is disabled; initialize WordPress/WooCommerce separately.
+{{- end }}
+An existing initialized store is preserved in its PVCs.
+Read README.md for setup, acceptance checks and recovery limitations.
+PVCs have Helm's keep annotation. Uninstalling is not a database reset or a backup.

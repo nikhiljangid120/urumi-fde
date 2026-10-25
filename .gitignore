@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+coverage/
+*.log
+.local/
+
+# Personal guides, illustrations and generated handbooks remain local-only.
+/docs/
+/output/

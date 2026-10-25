@@ -1,0 +1,16 @@
+{
+  "name": "urumi-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Monorepo commands for the Urumi dashboard, gateway and MCP services.",
+  "engines": { "node": ">=22.13.0" },
+  "scripts": {
+    "install:apps": "npm ci --prefix apps/woocommerce-mcp && npm ci --prefix apps/gateway && npm ci --prefix apps/dashboard && npm ci --prefix apps/utils-mcp && npm ci --prefix apps/everything-mcp",
+    "typecheck": "npm run typecheck --prefix apps/woocommerce-mcp && npm run typecheck --prefix apps/gateway && npm run typecheck --prefix apps/dashboard",
+    "test": "npm test --prefix apps/woocommerce-mcp && npm test --prefix apps/gateway && npm test --prefix apps/utils-mcp",
+    "build": "npm run build --prefix apps/woocommerce-mcp && npm run build --prefix apps/gateway && npm run build --prefix apps/dashboard",
+    "dev:dashboard": "npm run dev --prefix apps/dashboard",
+    "dev:gateway": "npm run dev --prefix apps/gateway",
+    "dev:adapter": "npm run dev --prefix apps/woocommerce-mcp"
+  }
+}
