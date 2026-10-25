@@ -6,33 +6,103 @@ use their tools through one gateway endpoint with their own identity.
 
 ## Architecture
 
-```text
-Browser (React executes here)       External MCP client
-                |                     | URL + personal key
-                +--------- HTTPS -----+
-                              |
-                       Traefik / Ingress
-                    /           |          \
-             dashboard        /api        /mcp
-             static files        \        /
-                              NestJS gateway ---- External LLM API
-                                   |
-                          Shared ToolRouter + audit
-                       /           |           \
-                  Woo MCP       Utilities     Reference MCP
-                     |
-              WooCommerce REST API
-                     |
-              WordPress + WooCommerce ---- MySQL + PVC
+```mermaid
+flowchart TB
+    Browser["Browser<br/>Dashboard, chat or storefront"]
+    Client["External MCP client<br/>Gateway URL + personal API key"]
+    Model["External LLM API<br/>Chat model provider"]
 
-Gateway ---- PostgreSQL + PVC (users, keys, upstreams, audit)
-Customer browser ---- Ingress ---- WooCommerce checkout (bypasses MCP)
+    subgraph Cluster["Kubernetes cluster"]
+        Ingress["Traefik / Ingress<br/>Public web entry point"]
+        Dashboard["React dashboard server<br/>Serves HTML, CSS and JavaScript"]
+        Gateway["NestJS gateway<br/>Identity · ToolRouter · chat · audit"]
+        Upstreams["Internal MCP servers<br/>WooCommerce · Utilities · Reference"]
+        Postgres[("PostgreSQL + PVC<br/>Gateway accounts, keys and audit")]
+        Store["WordPress + WooCommerce<br/>Storefront, checkout and REST API"]
+        MySQL[("MySQL + PVC<br/>Store products and orders")]
+
+        Ingress -->|Gateway hostname: /| Dashboard
+        Ingress -->|Gateway hostname: /api and /mcp| Gateway
+        Ingress -->|Store hostname| Store
+        Gateway -->|Discover and call tools| Upstreams
+        Gateway -->|Read and write| Postgres
+        Upstreams -->|WooCommerce adapter: REST API| Store
+        Store --> MySQL
+    end
+
+    Browser --> Ingress
+    Client -->|Authenticated /mcp requests| Ingress
+    Gateway <-.->|Chat requests and tool results| Model
+
+    classDef entry fill:#fff7ed,stroke:#c2410c,color:#7c2d12
+    classDef app fill:#eff6ff,stroke:#2563eb,color:#1e3a8a
+    classDef tools fill:#ecfdf5,stroke:#059669,color:#064e3b
+    classDef data fill:#f5f3ff,stroke:#7c3aed,color:#4c1d95
+    classDef external fill:#f8fafc,stroke:#64748b,color:#0f172a
+    class Ingress entry
+    class Dashboard,Gateway,Store app
+    class Upstreams tools
+    class Postgres,MySQL data
+    class Browser,Client,Model external
+    style Cluster fill:#f8fafc,stroke:#cbd5e1,color:#334155
 ```
 
-All application workloads run in Kubernetes. Namespace `urumi` contains the store,
-MySQL and setup Job. `urumi-platform` contains the dashboard, gateway, PostgreSQL
-and three MCP servers. Traefik runs in `kube-system`; the model API is external.
-The cloud demo is one K3s VM, not a highly available or managed AKS cluster.
+**How to read it:** browsers and MCP clients enter through Traefik. The gateway
+authenticates tool users and routes calls to internal MCP servers. Only the
+WooCommerce adapter calls the store API; utilities and reference tools do not.
+The model provider sits outside the cluster.
+
+- **Dashboard:** the server supplies static assets; React executes in the browser
+  and calls the gateway API. The dashboard server does not execute the chat model.
+- **Chat and external tools:** both use the gateway's shared ToolRouter and user
+  attribution. External clients need a gateway key, not upstream credentials.
+- **Checkout:** customer purchases go directly to WooCommerce through Ingress,
+  bypassing the gateway and MCP adapter.
+- **State:** PostgreSQL holds gateway records; MySQL holds store records.
+  WordPress uploads also use a persistent volume, omitted from this overview.
+
+<details>
+<summary><strong>Trace one MCP request: retrieve an order</strong></summary>
+
+```mermaid
+sequenceDiagram
+    participant C as MCP client
+    participant G as Gateway
+    participant P as PostgreSQL
+    participant W as WooCommerce MCP
+    participant S as WooCommerce API
+
+    C->>G: tools/call: woo__get_order + user key
+    G->>P: Look up key hash and user
+    P-->>G: Active key and identity
+    Note over G: Resolve woo prefix and check upstream enabled
+    G->>W: get_order with a timeout
+    W->>S: REST request with store credentials
+    S-->>W: Order data
+    W-->>G: Tool result
+    G->>P: Attempt attributed audit write
+    G-->>C: Tool result
+```
+
+The client's key stops at the gateway. The adapter uses separate server-side
+WooCommerce credentials. Audit persistence failures are logged; the current
+implementation does not guarantee durable audit capture during database failure.
+
+</details>
+
+### Deployment boundaries
+
+| Namespace | Workloads |
+| --- | --- |
+| `kube-system` | Traefik and Kubernetes supporting services |
+| `urumi-platform` | Dashboard, gateway, PostgreSQL and three MCP servers |
+| `urumi` | WordPress/WooCommerce, MySQL and the store setup Job |
+
+All application workloads run in the cluster. Local k3d hosts K3s inside Docker;
+Azure runs K3s directly on an Ubuntu VM using containerd. The cloud demo uses one
+VM; it is not a highly available or managed AKS deployment.
+
+### Repository layout
 
 | Path | Responsibility |
 | --- | --- |
