@@ -42,46 +42,9 @@ Groq credentials are needed to review either application interface.
 
 ## Architecture
 
-```mermaid
-flowchart TB
-    Browser["Browser<br/>Dashboard, chat or storefront"]
-    Client["External MCP client<br/>Gateway URL + personal API key"]
-    Model["External LLM API<br/>Chat model provider"]
+[![System architecture: Azure VM, K3s, gateway, MCP servers and WooCommerce](assets/architecture/system-architecture.png)](assets/architecture/system-architecture.svg)
 
-    subgraph Cluster["Kubernetes cluster"]
-        Ingress["Traefik / Ingress<br/>Public web entry point"]
-        Dashboard["React dashboard server<br/>Serves HTML, CSS and JavaScript"]
-        Gateway["NestJS gateway<br/>Identity · ToolRouter · chat · audit"]
-        Upstreams["Internal MCP servers<br/>WooCommerce · Utilities · Reference"]
-        Postgres[("PostgreSQL + PVC<br/>Gateway accounts, keys and audit")]
-        Store["WordPress + WooCommerce<br/>Storefront, checkout and REST API"]
-        MySQL[("MySQL + PVC<br/>Store products and orders")]
-
-        Ingress -->|Gateway hostname: /| Dashboard
-        Ingress -->|Gateway hostname: /api and /mcp| Gateway
-        Ingress -->|Store hostname| Store
-        Gateway -->|Discover and call tools| Upstreams
-        Gateway -->|Read and write| Postgres
-        Upstreams -->|WooCommerce adapter: REST API| Store
-        Store --> MySQL
-    end
-
-    Browser --> Ingress
-    Client -->|Authenticated /mcp requests| Ingress
-    Gateway <-.->|Chat requests and tool results| Model
-
-    classDef entry fill:#fff7ed,stroke:#c2410c,color:#7c2d12
-    classDef app fill:#eff6ff,stroke:#2563eb,color:#1e3a8a
-    classDef tools fill:#ecfdf5,stroke:#059669,color:#064e3b
-    classDef data fill:#f5f3ff,stroke:#7c3aed,color:#4c1d95
-    classDef external fill:#f8fafc,stroke:#64748b,color:#0f172a
-    class Ingress entry
-    class Dashboard,Gateway,Store app
-    class Upstreams tools
-    class Postgres,MySQL data
-    class Browser,Client,Model external
-    style Cluster fill:#f8fafc,stroke:#cbd5e1,color:#334155
-```
+[Open full-size diagram](assets/architecture/system-architecture.svg) | [Editable Excalidraw source](assets/architecture/system-architecture.excalidraw)
 
 **How to read it:** browsers and MCP clients enter through Traefik. The gateway
 authenticates tool users and routes calls to internal MCP servers. Only the
