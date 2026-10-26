@@ -4,6 +4,25 @@ A WooCommerce store, a self-written store MCP adapter, a team gateway, a React
 dashboard and an LLM chat agent. Admins connect upstream servers once; members
 use their tools through one gateway endpoint with their own identity.
 
+## Public live demo
+
+- Gateway: <https://gateway.20.194.4.132.sslip.io>
+- Email: `demo@urumi.example`
+- Password: `Urumi-Demo-ad2e5b4c593dbc92`
+- Storefront: <https://store.20.194.4.132.sslip.io/shop/>
+
+This intentionally public account has the **member** role. Use it to try Chat,
+view its audit history, and generate a personal gateway API key for an external
+MCP client at `https://gateway.20.194.4.132.sslip.io/mcp`.
+It cannot manage upstream servers or team members.
+
+**Shared demo:** available write tools can change the shared store; per-tool
+read-only permissions are not implemented. Use synthetic data only. Everyone
+using this login shares its identity, audit history and key management. Groq
+quotas are shared, and the demo is available while the Azure VM is running.
+Administrative credentials, upstream credentials and provider keys are not
+published. Reviewers can also run their own installation using the steps below.
+
 ## Architecture
 
 ```mermaid
