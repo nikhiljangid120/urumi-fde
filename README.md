@@ -23,6 +23,23 @@ quotas are shared, and the demo is available while the Azure VM is running.
 Administrative credentials, upstream credentials and provider keys are not
 published. Reviewers can also run their own installation using the steps below.
 
+### Administrator access for reviewers
+
+The public demo login is a gateway **member** account, not an administrator.
+For a full management walkthrough, request dedicated reviewer access privately
+at **nikhiljangid343@gmail.com** or reply to the submission email thread:
+
+- **Gateway administration:** <https://gateway.20.194.4.132.sslip.io> for
+  managing upstream servers, invitations, members and member API keys, and
+  viewing team audit records.
+- **WordPress / WooCommerce administration:**
+  <https://store.20.194.4.132.sslip.io/wp-admin/> for verifying and managing
+  products, orders and store settings.
+
+These are separate accounts with separate permissions. Administrator passwords
+are shared privately for review, not published here. No Azure, SSH, database or
+Groq credentials are needed to review either application interface.
+
 ## Architecture
 
 ```mermaid
